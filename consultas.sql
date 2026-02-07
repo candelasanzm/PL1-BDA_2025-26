@@ -120,3 +120,24 @@ EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes2
 WHERE indice = 500;
+
+---------- Cuestión 7
+
+-- Borrar 5000000 de tuplas
+DELETE FROM public.estudiantes
+WHERE estudiante_id IN (
+  SELECT estudiante_id
+  FROM public.estudiantes
+  ORDER BY random()
+  LIMIT 5000000
+);
+
+-- Comprobar el tamaño
+SELECT pg_relation_size('public.estudiantes') / 8192 AS bloques;
+
+---------- Cuestión 8
+
+-- Insertar estudiante
+INSERT INTO public.estudiantes(nombre, codigo_carrera, edad, indice) VALUES ('Cuestion8', 3, 20, 5);
+
+---------- Cuestión 9
