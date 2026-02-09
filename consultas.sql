@@ -172,21 +172,75 @@ CREATE TABLE public.estudiantes3 (
   PRIMARY KEY (estudiante_id, codigo_carrera)
 ) PARTITION BY HASH (codigo_carrera);
 
-DO $$
-BEGIN
-  FOR i IN 0..19 LOOP
-    EXECUTE format(
-      'CREATE TABLE estudiantes3_p%02s PARTITION OF estudiantes3
-       FOR VALUES WITH (MODULUS 20, REMAINDER %s);',
-      i, i
-    );
-  END LOOP;
-END$$;
+-- Hago las 20 particiones
+CREATE TABLE estudiantes3_p0 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 0);
+CREATE TABLE estudiantes3_p1 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 1);
+CREATE TABLE estudiantes3_p2 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 2);
+CREATE TABLE estudiantes3_p3 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 3);
+CREATE TABLE estudiantes3_p4 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 4);
+CREATE TABLE estudiantes3_p5 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 5);
+CREATE TABLE estudiantes3_p6 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 6);
+CREATE TABLE estudiantes3_p7 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 7);
+CREATE TABLE estudiantes3_p8 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 8);
+CREATE TABLE estudiantes3_p9 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 9);
+CREATE TABLE estudiantes3_p10 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 10);
+CREATE TABLE estudiantes3_p11 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 11);
+CREATE TABLE estudiantes3_p12 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 12);
+CREATE TABLE estudiantes3_p13 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 13);
+CREATE TABLE estudiantes3_p14 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 14);
+CREATE TABLE estudiantes3_p15 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 15);
+CREATE TABLE estudiantes3_p16 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 16);
+CREATE TABLE estudiantes3_p17 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 17);
+CREATE TABLE estudiantes3_p18 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 18);
+CREATE TABLE estudiantes3_p19 PARTITION OF estudiantes3 FOR VALUES WITH (MODULUS 20, REMAINDER 19);
 
-SELECT indexname, indexdef
-FROM pg_indexes
-WHERE tablename = 'estudiantes3';
-
+-- Rellenamos la tabla
 COPY estudiantes3(nombre, codigo_carrera, edad, indice)
 FROM 'C:\estudiantes.csv'
 WITH (FORMAT csv, HEADER true);
+
+-- Cuántos bloques ocupa cada partición
+SELECT pg_relation_size('public.estudiantes3_p0') / 8192 AS bloques_p0;
+SELECT pg_relation_size('public.estudiantes3_p1') / 8192 AS bloques_p1;
+SELECT pg_relation_size('public.estudiantes3_p2') / 8192 AS bloques_p2;
+SELECT pg_relation_size('public.estudiantes3_p3') / 8192 AS bloques_p3;
+SELECT pg_relation_size('public.estudiantes3_p4') / 8192 AS bloques_p4;
+SELECT pg_relation_size('public.estudiantes3_p5') / 8192 AS bloques_p5;
+SELECT pg_relation_size('public.estudiantes3_p6') / 8192 AS bloques_p6;
+SELECT pg_relation_size('public.estudiantes3_p7') / 8192 AS bloques_p7;
+SELECT pg_relation_size('public.estudiantes3_p8') / 8192 AS bloques_p8;
+SELECT pg_relation_size('public.estudiantes3_p9') / 8192 AS bloques_p9;
+SELECT pg_relation_size('public.estudiantes3_p10') / 8192 AS bloques_p10;
+SELECT pg_relation_size('public.estudiantes3_p11') / 8192 AS bloques_p11;
+SELECT pg_relation_size('public.estudiantes3_p12') / 8192 AS bloques_p12;
+SELECT pg_relation_size('public.estudiantes3_p13') / 8192 AS bloques_p13;
+SELECT pg_relation_size('public.estudiantes3_p14') / 8192 AS bloques_p14;
+SELECT pg_relation_size('public.estudiantes3_p15') / 8192 AS bloques_p15;
+SELECT pg_relation_size('public.estudiantes3_p16') / 8192 AS bloques_p16;
+SELECT pg_relation_size('public.estudiantes3_p17') / 8192 AS bloques_p17;
+SELECT pg_relation_size('public.estudiantes3_p18') / 8192 AS bloques_p18;
+SELECT pg_relation_size('public.estudiantes3_p19') / 8192 AS bloques_p19;
+
+-- Hago la suma de todas las particiones
+SELECT (pg_relation_size('public.estudiantes3_p0') +
+        pg_relation_size('public.estudiantes3_p1') +
+        pg_relation_size('public.estudiantes3_p2') +
+        pg_relation_size('public.estudiantes3_p3') +
+        pg_relation_size('public.estudiantes3_p4') +
+        pg_relation_size('public.estudiantes3_p5') +
+        pg_relation_size('public.estudiantes3_p6') +
+        pg_relation_size('public.estudiantes3_p7') +
+        pg_relation_size('public.estudiantes3_p8') +
+        pg_relation_size('public.estudiantes3_p9') +
+        pg_relation_size('public.estudiantes3_p10') +
+        pg_relation_size('public.estudiantes3_p11') +
+        pg_relation_size('public.estudiantes3_p12') +
+        pg_relation_size('public.estudiantes3_p13') +
+        pg_relation_size('public.estudiantes3_p14') +
+        pg_relation_size('public.estudiantes3_p15') +
+        pg_relation_size('public.estudiantes3_p16') +
+        pg_relation_size('public.estudiantes3_p17') +
+        pg_relation_size('public.estudiantes3_p18') +
+        pg_relation_size('public.estudiantes3_p19')) / 8192 AS bloques_totales;
+
+---------- Cuestión 11
