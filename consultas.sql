@@ -163,12 +163,30 @@ SELECT
 ---------- Cuestión 10
 
 -- Crear nueva tabla estudiantes3
-CREATE TABLE estudiantes3 (
-    estudiante_id SERIAL,
-    nombre TEXT,
-    codigo_carrera INT,
-    edad INT,
-    indice INT,
-    h INT GENERATED ALWAYS AS (codigo_carrera % 20) STORED,
-    PRIMARY KEY (estudiante_id, h)
-) PARTITION BY LIST (h);
+CREATE TABLE public.estudiantes3 (
+  estudiante_id SERIAL,
+  nombre TEXT,
+  codigo_carrera INT,
+  edad INT,
+  indice INT,
+  PRIMARY KEY (estudiante_id, codigo_carrera)
+) PARTITION BY HASH (codigo_carrera);
+
+DO $$
+BEGIN
+  FOR i IN 0..19 LOOP
+    EXECUTE format(
+      'CREATE TABLE estudiantes3_p%02s PARTITION OF estudiantes3
+       FOR VALUES WITH (MODULUS 20, REMAINDER %s);',
+      i, i
+    );
+  END LOOP;
+END$$;
+
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'estudiantes3';
+
+COPY estudiantes3(nombre, codigo_carrera, edad, indice)
+FROM 'C:\estudiantes.csv'
+WITH (FORMAT csv, HEADER true);
