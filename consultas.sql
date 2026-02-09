@@ -1,6 +1,8 @@
+---------- Cuestión 1
+
 -- Creamos la tabla
 CREATE TABLE estudiantes (
-    estudiante_id SERIAL,
+    estudiante_id SERIAL PRIMARY KEY ,
     nombre TEXT,
     codigo_carrera INT,
     edad INT,
@@ -83,7 +85,7 @@ WHERE indice = 500;
 
 -- Creo una tabla estudiantes2
 CREATE TABLE estudiantes2 (
-    estudiante_id SERIAL,
+    estudiante_id SERIAL PRIMARY KEY,
     nombre TEXT,
     codigo_carrera INT,
     edad INT,
@@ -141,3 +143,32 @@ SELECT pg_relation_size('public.estudiantes') / 8192 AS bloques;
 INSERT INTO public.estudiantes(nombre, codigo_carrera, edad, indice) VALUES ('Cuestion8', 3, 20, 5);
 
 ---------- Cuestión 9
+
+-- Vacuum (Analyze), limpia tuplas muertas marcando el espacio como reutilizable, pero no reduce mucho el espacio físico
+VACUUM (ANALYZE) public.estudiantes;
+
+-- Vacuum Full recupera el máximo espacio
+VACUUM FULL public.estudiantes;
+ANALYZE public.estudiantes;
+
+-- Reactualizar los índices
+REINDEX TABLE estudiantes;
+
+-- Medir cuánto espacio se ha recuperado
+SELECT
+  pg_relation_size('public.estudiantes') AS tabla,
+  pg_indexes_size('public.estudiantes')  AS indices,
+  pg_total_relation_size('public.estudiantes') AS total;
+
+---------- Cuestión 10
+
+-- Crear nueva tabla estudiantes3
+CREATE TABLE estudiantes3 (
+    estudiante_id SERIAL,
+    nombre TEXT,
+    codigo_carrera INT,
+    edad INT,
+    indice INT,
+    h INT GENERATED ALWAYS AS (codigo_carrera % 20) STORED,
+    PRIMARY KEY (estudiante_id, h)
+) PARTITION BY LIST (h);
