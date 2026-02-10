@@ -14,6 +14,9 @@ COPY estudiantes(nombre, codigo_carrera, edad, indice)
 FROM 'C:\estudiantes.csv'
 WITH (FORMAT csv, HEADER true);
 
+-- Localizamos los ficheros de la tabla
+SELECT pg_relation_filepath('public.estudiantes');
+
 ---------- Cuestión 2
 
 -- Consultamos el tamaño del bloque
@@ -244,3 +247,18 @@ SELECT (pg_relation_size('public.estudiantes3_p0') +
         pg_relation_size('public.estudiantes3_p19')) / 8192 AS bloques_totales;
 
 ---------- Cuestión 11
+
+-- Actualizar estadisticas
+ANALYZE public.estudiantes3;
+
+-- Muestra los estudiantes con índice 500
+SELECT * FROM public.estudiantes3 WHERE indice = 500;
+
+-- Devuelve el número de tuplas
+SELECT COUNT(*) AS tuplas FROM public.estudiantes3 WHERE indice = 500;
+
+-- Devuelve los bloques que Postgres lee del disco
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT *
+FROM public.estudiantes3
+WHERE indice = 500;
