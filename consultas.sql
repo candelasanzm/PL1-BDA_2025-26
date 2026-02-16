@@ -30,14 +30,13 @@ SELECT
 -- Cuántos registros caben realmente
 SELECT
   COUNT(*) AS num_registros,
-  COUNT(*) / (pg_relation_size('public.estudiantes') / 8192)
-    AS factor_bloque_medio_real
+  COUNT(*) / (pg_relation_size('public.estudiantes') / 8192) AS factor_bloque_medio_real
 FROM public.estudiantes;
 
 ---------- Cuestión 3
 
 -- Muestra los estudiantes con índice 500
-SELECT * FROM public.estudiantes WHERE indice = 500;
+SELECT * FROM public.estudiantes WHERE indice = 500 ORDER BY estudiante_id;
 
 -- Devuelve el número de tuplas
 SELECT COUNT(*) AS tuplas FROM public.estudiantes WHERE indice = 500;
@@ -46,7 +45,8 @@ SELECT COUNT(*) AS tuplas FROM public.estudiantes WHERE indice = 500;
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes
-WHERE indice = 500;
+WHERE indice = 500
+ORDER BY estudiante_id;
 
 -- Obtener las estadísticas de la tabla y sus campos
 ANALYZE public.estudiantes;
@@ -82,12 +82,13 @@ WHERE schemaname = 'public'
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes
-WHERE indice = 500;
+WHERE indice = 500
+ORDER BY estudiante_id;
 
 ---------- Cuestión 5
 
 -- Creo una tabla estudiantes2
-CREATE TABLE estudiantes2 (
+CREATE TABLE IF NOT EXISTS estudiantes2 (
     estudiante_id SERIAL PRIMARY KEY,
     nombre TEXT,
     codigo_carrera INT,
@@ -96,15 +97,26 @@ CREATE TABLE estudiantes2 (
 );
 
 -- Insertamos en la tabla los datos creados con el archivo estudiantes.py
-COPY estudiantes2(nombre, codigo_carrera, edad, indice)
+COPY public.estudiantes2(nombre, codigo_carrera, edad, indice)
 FROM 'C:\estudiantes.csv'
 WITH (FORMAT csv, HEADER true);
 
--- Creamos un índice
-CREATE INDEX idx_estudiantes2_indice ON public.estudiantes2(indice);
+-- Reescribir la tabla ordenando por índice
+CREATE TABLE public.estudiantes2_temp AS
+SELECT *
+FROM public.estudiantes2
+ORDER BY indice, estudiante_id;
 
--- Ejecutamos el clustering (para ordenar físicamente)
-CLUSTER public.estudiantes2 USING idx_estudiantes2_indice;
+-- Vacio la tabla original y vuelvo a insertar en orden
+TRUNCATE TABLE public.estudiantes2;
+
+INSERT INTO public.estudiantes2(estudiante_id, nombre, codigo_carrera, edad, indice)
+SELECT estudiante_id, nombre, codigo_carrera, edad, indice
+FROM public.estudiantes2_temp
+ORDER BY indice, estudiante_id;
+
+-- Limpiar el temporal
+DROP TABLE public.estudiantes2_temp;
 
 -- Actualiza las estadísticas
 ANALYZE public.estudiantes2;
@@ -115,7 +127,7 @@ SELECT pg_relation_size('public.estudiantes2') / 8192 AS bloques_reales;
 ---------- Cuestión 6
 
 -- Muestra los estudiantes con índice 500
-SELECT * FROM public.estudiantes2 WHERE indice = 500;
+SELECT * FROM public.estudiantes2 WHERE indice = 500 ORDER BY estudiante_id;
 
 -- Devuelve el número de tuplas
 SELECT COUNT(*) AS tuplas FROM public.estudiantes2 WHERE indice = 500;
@@ -124,7 +136,8 @@ SELECT COUNT(*) AS tuplas FROM public.estudiantes2 WHERE indice = 500;
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes2
-WHERE indice = 500;
+WHERE indice = 500
+ORDER BY estudiante_id;
 
 ---------- Cuestión 7
 
@@ -138,12 +151,17 @@ WHERE estudiante_id IN (
 );
 
 -- Comprobar el tamaño
-SELECT pg_relation_size('public.estudiantes') / 8192 AS bloques;
+SELECT
+  pg_relation_size('public.estudiantes')/8192 AS bloques_tabla,
+  pg_indexes_size('public.estudiantes')/8192  AS bloques_indices,
+  pg_total_relation_size('public.estudiantes')/8192 AS bloques_total;
 
 ---------- Cuestión 8
 
 -- Insertar estudiante
-INSERT INTO public.estudiantes(nombre, codigo_carrera, edad, indice) VALUES ('Cuestion8', 3, 20, 5);
+INSERT INTO public.estudiantes(nombre, codigo_carrera, edad, indice)
+VALUES ('Cuestion8', 3, 20, 5)
+RETURNING ctid, estudiante_id;
 
 ---------- Cuestión 9
 
