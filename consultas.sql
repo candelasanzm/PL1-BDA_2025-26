@@ -280,3 +280,157 @@ EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes3
 WHERE indice = 500;
+
+---------- Cuestión 12
+
+-- Borrar las tablas anteriores
+DROP TABLE IF EXISTS public.estudiantes CASCADE;
+DROP TABLE IF EXISTS public.estudiantes2 CASCADE;
+DROP TABLE IF EXISTS public.estudiantes3 CASCADE;
+
+-- Crear estudiantes2 y cargar el csv
+CREATE TABLE IF NOT EXISTS estudiantes2 (
+    estudiante_id SERIAL PRIMARY KEY,
+    nombre TEXT,
+    codigo_carrera INT,
+    edad INT,
+    indice INT
+);
+
+COPY public.estudiantes2(nombre, codigo_carrera, edad, indice)
+FROM 'C:\estudiantes.csv'
+WITH (FORMAT csv, HEADER true);
+
+-- Ordenar físicamente por índice usando CLUSTER
+CREATE INDEX idx_estudiantes2_indice ON public.estudiantes2(indice);
+
+CLUSTER public.estudiantes2 USING idx_estudiantes2_indice;
+
+ANALYZE public.estudiantes2;
+
+-- Comprobar los bloques
+SELECT pg_relation_size('public.estudiantes2') / 8192 AS bloques_estudiantes2;
+
+---------- Cuestión 13
+
+-- Crear índice B-Tree
+CREATE INDEX IF NOT EXISTS idx_estudiantes2_estudiante_id
+ON public.estudiantes2 USING btree (estudiante_id);
+
+-- ¿Dónde se almacena físicamente?
+
+    -- Ruta física
+SELECT pg_relation_filepath('public.idx_estudiantes2_estudiante_id') AS fichero_relativo;
+
+    -- Dónde está en la tabla
+SELECT c.relname AS indice, COALESCE(t.spcname, 'pg_default') AS tablespace
+FROM pg_class c
+LEFT JOIN pg_tablespace t ON t.oid = c.reltablespace
+WHERE c.relname = 'idx_estudiantes2_estudiante_id';
+
+-- Compruebo el tamaño del bloque
+SHOW block_size;
+
+-- Tamaño en bytes y en bloques
+SELECT
+    pg_relation_size('public.idx_estudiantes2_estudiante_id') AS bytes_indice,
+    pg_relation_size('public.idx_estudiantes2_estudiante_id') / 8192 AS bloques_indice;
+
+-- Niveles del B-Tree
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+
+SELECT level + 1 AS num_niveles
+FROM bt_metap('public.idx_estudiantes2_estudiante_id');
+
+-- Cuantos bloques y tuplas tiene por nivel
+SELECT
+  s.btpo_level AS nivel,
+  COUNT(*) AS bloques_en_nivel,
+  ROUND(AVG(s.live_items), 2) AS tuplas_media_por_bloque
+FROM generate_series(
+  1::bigint,
+  (SELECT relpages::bigint - 1
+   FROM pg_class
+   WHERE relname = 'idx_estudiantes2_estudiante_id')
+) AS blkno
+CROSS JOIN LATERAL bt_page_stats('public.idx_estudiantes2_estudiante_id', blkno) AS s
+GROUP BY s.btpo_level
+ORDER BY s.btpo_level DESC;
+
+---------- Cuestión 14
+
+
+
+---------- Cuestión 15
+
+-- Crear índice hash
+CREATE INDEX IF NOT EXISTS idx_estudiantes2_estudiante_id_hash
+ON public.estudiantes2 USING hash (estudiante_id);
+
+-- ¿Dónde se almacena físicamente?
+
+    -- Ruta física
+SELECT pg_relation_filepath('public.idx_estudiantes2_estudiante_id_hash') AS fichero_relativo;
+
+    -- Dónde está en la tabla
+SELECT c.relname AS indice, COALESCE(t.spcname, 'pg_default') AS tablespace
+FROM pg_class c
+LEFT JOIN pg_tablespace t ON t.oid = c.reltablespace
+WHERE c.relname = 'idx_estudiantes2_estudiante_id_hash';
+
+-- Compruebo el tamaño del bloque
+SHOW block_size;
+
+-- Tamaño en bytes y en bloques
+SELECT
+    pg_relation_size('public.idx_estudiantes2_estudiante_id_hash') AS bytes_indice,
+    pg_relation_size('public.idx_estudiantes2_estudiante_id_hash') / 8192 AS bloques_indice;
+
+-- Niveles del Hash
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+
+SELECT *
+FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_estudiante_id_hash', 0));
+
+-- Número de tuplas totales
+SELECT COUNT(*) AS tuplas_totales
+FROM public.estudiantes2;
+
+-- Tuplas de media en un cajón
+WITH meta AS (
+  SELECT *
+  FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_estudiante_id_hash', 0))
+),
+t AS (
+  SELECT COUNT(*)::numeric AS n FROM public.estudiantes2
+)
+SELECT
+  (meta.maxbucket + 1) AS num_cajones,
+  ROUND(t.n / (meta.maxbucket + 1), 2) AS tuplas_media_por_cajon
+FROM meta, t;
+
+---------- Cuestión 16
+
+
+
+---------- Cuestión 17
+
+
+
+---------- Cuestión 18
+
+
+
+---------- Cuestión 19
+
+
+
+---------- Cuestión 20
+
+
+
+---------- Cuestión 21
+
+
+
+---------- Cuestión 22
