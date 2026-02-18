@@ -375,7 +375,13 @@ ORDER BY s.btpo_level DESC;
 
 ---------- Cuestión 14
 
+-- Verificar Lk
+SELECT pg_column_size(estudiante_id)
+FROM estudiantes2
+LIMIT 1;
 
+-- Tamaño bloque
+SHOW block_size;
 
 ---------- Cuestión 15
 
@@ -477,7 +483,7 @@ ORDER BY s.btpo_level DESC;
 
 ---------- Cuestión 19
 
-    -- Crear índice hash
+-- Crear índice hash
 CREATE INDEX IF NOT EXISTS idx_estudiantes2_indice_hash
 ON public.estudiantes2 USING hash (indice);
 
