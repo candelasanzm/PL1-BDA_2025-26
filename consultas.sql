@@ -288,7 +288,7 @@ DROP TABLE IF EXISTS public.estudiantes CASCADE;
 DROP TABLE IF EXISTS public.estudiantes2 CASCADE;
 DROP TABLE IF EXISTS public.estudiantes3 CASCADE;
 
--- Crear estudiantes2 y cargar el csv
+-- Creo una tabla estudiantes2
 CREATE TABLE IF NOT EXISTS public.estudiantes2 (
     estudiante_id SERIAL PRIMARY KEY,
     nombre TEXT,
@@ -297,15 +297,31 @@ CREATE TABLE IF NOT EXISTS public.estudiantes2 (
     indice INT
 );
 
+-- Insertamos en la tabla los datos creados con el archivo estudiantes.py
 COPY public.estudiantes2(nombre, codigo_carrera, edad, indice)
 FROM 'C:\estudiantes.csv'
 WITH (FORMAT csv, HEADER true);
 
--- Ordenar físicamente por índice usando CLUSTER
-CREATE INDEX IF NOT EXISTS idx_estudiantes2_indice ON public.estudiantes2(indice);
+DROP TABLE IF EXISTS public.estudiantes2_temp;
 
-CLUSTER public.estudiantes2 USING idx_estudiantes2_indice;
+-- Reescribir la tabla ordenando por índice
+CREATE TABLE public.estudiantes2_temp AS
+SELECT *
+FROM public.estudiantes2
+ORDER BY indice, estudiante_id;
 
+-- Vacio la tabla original y vuelvo a insertar en orden
+TRUNCATE TABLE public.estudiantes2;
+
+INSERT INTO public.estudiantes2(estudiante_id, nombre, codigo_carrera, edad, indice)
+SELECT estudiante_id, nombre, codigo_carrera, edad, indice
+FROM public.estudiantes2_temp
+ORDER BY indice, estudiante_id;
+
+-- Limpiar el temporal
+DROP TABLE public.estudiantes2_temp;
+
+-- Actualiza las estadísticas
 ANALYZE public.estudiantes2;
 
 -- Comprobar los bloques
