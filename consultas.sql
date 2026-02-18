@@ -88,7 +88,7 @@ ORDER BY estudiante_id;
 ---------- Cuestión 5
 
 -- Creo una tabla estudiantes2
-CREATE TABLE IF NOT EXISTS estudiantes2 (
+CREATE TABLE IF NOT EXISTS public.estudiantes2 (
     estudiante_id SERIAL PRIMARY KEY,
     nombre TEXT,
     codigo_carrera INT,
