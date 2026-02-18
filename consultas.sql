@@ -45,8 +45,7 @@ SELECT COUNT(*) AS tuplas FROM public.estudiantes WHERE indice = 500;
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes
-WHERE indice = 500
-ORDER BY estudiante_id;
+WHERE indice = 500;
 
 -- Obtener las estadísticas de la tabla y sus campos
 ANALYZE public.estudiantes;
@@ -82,8 +81,7 @@ WHERE schemaname = 'public'
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT *
 FROM public.estudiantes
-WHERE indice = 500
-ORDER BY estudiante_id;
+WHERE indice = 500;
 
 ---------- Cuestión 5
 
@@ -101,8 +99,10 @@ COPY public.estudiantes2(nombre, codigo_carrera, edad, indice)
 FROM 'C:\estudiantes.csv'
 WITH (FORMAT csv, HEADER true);
 
+DROP TABLE IF EXISTS public.estudiantes2_temp;
+
 -- Reescribir la tabla ordenando por índice
-CREATE TABLE IF NOT EXISTS public.estudiantes2_temp AS
+CREATE TABLE public.estudiantes2_temp AS
 SELECT *
 FROM public.estudiantes2
 ORDER BY indice, estudiante_id;
@@ -173,7 +173,7 @@ VACUUM FULL public.estudiantes;
 ANALYZE public.estudiantes;
 
 -- Reactualizar los índices
-REINDEX TABLE estudiantes;
+REINDEX TABLE public.estudiantes;
 
 -- Medir cuánto espacio se ha recuperado
 SELECT
@@ -302,7 +302,7 @@ FROM 'C:\estudiantes.csv'
 WITH (FORMAT csv, HEADER true);
 
 -- Ordenar físicamente por índice usando CLUSTER
-CREATE INDEX idx_estudiantes2_indice ON public.estudiantes2(indice);
+CREATE INDEX IF NOT EXISTS idx_estudiantes2_indice ON public.estudiantes2(indice);
 
 CLUSTER public.estudiantes2 USING idx_estudiantes2_indice;
 
@@ -386,9 +386,7 @@ SELECT
     pg_relation_size('public.idx_estudiantes2_estudiante_id_hash') AS bytes_indice,
     pg_relation_size('public.idx_estudiantes2_estudiante_id_hash') / 8192 AS bloques_indice;
 
--- Niveles del Hash
-CREATE EXTENSION IF NOT EXISTS pageinspect;
-
+-- Cajones del Hash
 SELECT *
 FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_estudiante_id_hash', 0));
 
@@ -415,7 +413,47 @@ FROM meta, t;
 
 ---------- Cuestión 17
 
+-- Crear índice B-Tree
+CREATE INDEX IF NOT EXISTS idx_estudiantes2_indice_btree
+ON public.estudiantes2 USING btree (indice);
 
+-- ¿Dónde se almacena físicamente?
+
+    -- Ruta física
+SELECT pg_relation_filepath('public.idx_estudiantes2_indice_btree') AS fichero_relativo;
+
+    -- Dónde está en la tabla
+SELECT c.relname AS indice, COALESCE(t.spcname, 'pg_default') AS tablespace
+FROM pg_class c
+LEFT JOIN pg_tablespace t ON t.oid = c.reltablespace
+WHERE c.relname = 'idx_estudiantes2_indice_btree';
+
+-- Compruebo el tamaño del bloque
+SHOW block_size;
+
+-- Tamaño en bytes y en bloques
+SELECT
+    pg_relation_size('public.idx_estudiantes2_indice_btree') AS bytes_indice,
+    pg_relation_size('public.idx_estudiantes2_indice_btree') / 8192 AS bloques_indice;
+
+-- Niveles del B-Tree
+SELECT level + 1 AS num_niveles
+FROM bt_metap('public.idx_estudiantes2_indice_btree');
+
+-- Cuantos bloques y tuplas tiene por nivel
+SELECT
+  s.btpo_level AS nivel,
+  COUNT(*) AS bloques_en_nivel,
+  ROUND(AVG(s.live_items), 2) AS tuplas_media_por_bloque
+FROM generate_series(
+  1::bigint,
+  (SELECT relpages::bigint - 1
+   FROM pg_class
+   WHERE relname = 'idx_estudiantes2_indice_btree')
+) AS blkno
+CROSS JOIN LATERAL bt_page_stats('public.idx_estudiantes2_indice_btree', blkno) AS s
+GROUP BY s.btpo_level
+ORDER BY s.btpo_level DESC;
 
 ---------- Cuestión 18
 
@@ -423,7 +461,49 @@ FROM meta, t;
 
 ---------- Cuestión 19
 
+    -- Crear índice hash
+CREATE INDEX IF NOT EXISTS idx_estudiantes2_indice_hash
+ON public.estudiantes2 USING hash (indice);
 
+-- ¿Dónde se almacena físicamente?
+
+    -- Ruta física
+SELECT pg_relation_filepath('public.idx_estudiantes2_indice_hash') AS fichero_relativo;
+
+    -- Dónde está en la tabla
+SELECT c.relname AS indice, COALESCE(t.spcname, 'pg_default') AS tablespace
+FROM pg_class c
+LEFT JOIN pg_tablespace t ON t.oid = c.reltablespace
+WHERE c.relname = 'idx_estudiantes2_indice_hash';
+
+-- Compruebo el tamaño del bloque
+SHOW block_size;
+
+-- Tamaño en bytes y en bloques
+SELECT
+    pg_relation_size('public.idx_estudiantes2_indice_hash') AS bytes_indice,
+    pg_relation_size('public.idx_estudiantes2_indice_hash') / 8192 AS bloques_indice;
+
+-- Cajones del Hash
+SELECT *
+FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_indice_hash', 0));
+
+-- Número de tuplas totales
+SELECT COUNT(*) AS tuplas_totales
+FROM public.estudiantes2;
+
+-- Tuplas de media en un cajón
+WITH meta AS (
+  SELECT *
+  FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_indice_hash', 0))
+),
+t AS (
+  SELECT COUNT(*)::numeric AS n FROM public.estudiantes2
+)
+SELECT
+  (meta.maxbucket + 1) AS num_cajones,
+  ROUND(t.n / (meta.maxbucket + 1), 2) AS tuplas_media_por_cajon
+FROM meta, t;
 
 ---------- Cuestión 20
 
