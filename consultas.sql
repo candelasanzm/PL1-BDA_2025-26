@@ -431,7 +431,9 @@ FROM meta, t;
 
 ---------- Cuestión 16
 
-
+-- Ver cajones
+SELECT *
+FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_estudiante_id_hash', 0));
 
 ---------- Cuestión 17
 
@@ -479,7 +481,10 @@ ORDER BY s.btpo_level DESC;
 
 ---------- Cuestión 18
 
-
+-- Verificar Lk
+SELECT pg_column_size(indice)
+FROM estudiantes2
+LIMIT 1;
 
 ---------- Cuestión 19
 
@@ -529,7 +534,9 @@ FROM meta, t;
 
 ---------- Cuestión 20
 
-
+-- Ver cajones
+SELECT *
+FROM hash_metapage_info(get_raw_page('public.idx_estudiantes2_indice_hash', 0));
 
 ---------- Cuestión 21
 
