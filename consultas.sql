@@ -570,3 +570,108 @@ CREATE INDEX IF NOT EXISTS idx_estudiantes_estudiante_id_hash ON public.estudian
 
 -- Crear índice tipo hash sobre el campo indice
 CREATE INDEX IF NOT EXISTS idx_estudiantes_indice_hash ON public.estudiantes USING hash (indice);
+
+---------- Cuestión 23
+
+----- Apartado 1
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta, contar tuplas
+SELECT COUNT(*) AS tuplas
+FROM public.estudiantes
+WHERE codigo_carrera = 50;
+
+SELECT *
+FROM public.estudiantes
+WHERE codigo_carrera = 50;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
+----- Apartado 2
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta, contar tuplas
+SELECT COUNT(*) AS tuplas
+FROM public.estudiantes
+WHERE estudiante_id = 80000;
+
+SELECT *
+FROM public.estudiantes
+WHERE estudiante_id = 80000;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
+----- Apartado 3
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+----- Apartado 4
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+----- Apartado 5
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+----- Apartado 6
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+----- Apartado 7
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+---------- Cuestión 24
+
+
+
+---------- Cuestión 25
+
+
+
+---------- Cuestión 26
