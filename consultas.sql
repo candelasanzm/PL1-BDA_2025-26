@@ -536,3 +536,37 @@ FROM meta, t;
 
 
 ---------- Cuestión 22
+
+-- Borrar las posibles tablas existentes
+DROP TABLE IF EXISTS public.estudiantes CASCADE;
+DROP TABLE IF EXISTS public.estudiantes2 CASCADE;
+DROP TABLE IF EXISTS public.estudiantes2_temp CASCADE;
+DROP TABLE IF EXISTS public.estudiantes3 CASCADE;
+
+-- Creamos la tabla estudiantes e insertamos los datos en ella
+CREATE TABLE IF NOT EXISTS public.estudiantes (
+    estudiante_id SERIAL PRIMARY KEY ,
+    nombre TEXT,
+    codigo_carrera INT,
+    edad INT,
+    indice INT
+);
+
+COPY public.estudiantes(nombre, codigo_carrera, edad, indice)
+FROM 'C:\estudiantes.csv'
+WITH (FORMAT csv, HEADER true);
+
+-- Actualizar estadísticas
+ANALYZE public.estudiantes;
+
+-- Crear índice primario tipo árbol sobre el campo índice
+CREATE INDEX IF NOT EXISTS idx_estudiantes_indice_btree ON public.estudiantes USING btree (indice);
+
+-- Crear índice primario tipo árbol sobre el campo codigo_carrera
+CREATE INDEX IF NOT EXISTS idx_estudiantes_codigo_carrera_btree ON public.estudiantes USING btree (codigo_carrera);
+
+-- Crear índice tipo hash sobre el campo estudiante_id
+CREATE INDEX IF NOT EXISTS idx_estudiantes_estudiante_id_hash ON public.estudiantes USING hash (estudiante_id);
+
+-- Crear índice tipo hash sobre el campo indice
+CREATE INDEX IF NOT EXISTS idx_estudiantes_indice_hash ON public.estudiantes USING hash (indice);
