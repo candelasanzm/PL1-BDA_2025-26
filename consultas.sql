@@ -586,11 +586,11 @@ CREATE INDEX IF NOT EXISTS idx_estudiantes_indice_hash ON public.estudiantes USI
 SELECT pg_stat_reset();
 
 -- Ejecutar la consulta, contar tuplas
-SELECT COUNT(*) AS tuplas
+SELECT *
 FROM public.estudiantes
 WHERE codigo_carrera = 50;
 
-SELECT *
+SELECT COUNT(*)
 FROM public.estudiantes
 WHERE codigo_carrera = 50;
 
@@ -620,11 +620,11 @@ ORDER BY indexrelname;
 SELECT pg_stat_reset();
 
 -- Ejecutar la consulta, contar tuplas
-SELECT COUNT(*) AS tuplas
+SELECT *
 FROM public.estudiantes
 WHERE estudiante_id = 80000;
 
-SELECT *
+SELECT COUNT(*)
 FROM public.estudiantes
 WHERE estudiante_id = 80000;
 
@@ -653,32 +653,452 @@ ORDER BY indexrelname;
 -- Reinicializamos estadísticas
 SELECT pg_stat_reset();
 
+-- Ejecutar la consulta
+SELECT *
+FROM public.estudiantes
+WHERE indice BETWEEN 100 AND 200;
+
+SELECT COUNT(*)
+FROM public.estudiantes
+WHERE indice BETWEEN 100 AND 200;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
 ----- Apartado 4
 
 -- Reinicializamos estadísticas
 SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT COUNT(*) AS tuplas
+FROM public.estudiantes
+WHERE edad = 20;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
 
 ----- Apartado 5
 
 -- Reinicializamos estadísticas
 SELECT pg_stat_reset();
 
+-- Ejecutar la consulta
+SELECT indice, COUNT(*)
+FROM public.estudiantes
+GROUP BY indice;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
 ----- Apartado 6
 
 -- Reinicializamos estadísticas
 SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT codigo_carrera, AVG(edad)
+FROM public.estudiantes
+GROUP BY codigo_carrera;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
 
 ----- Apartado 7
 
 -- Reinicializamos estadísticas
 SELECT pg_stat_reset();
 
+-- Ejecutar la consulta
+INSERT INTO public.estudiantes(nombre, codigo_carrera, edad, indice)
+VALUES ('Cuestion23.7', 10, 21, 100);
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
 ---------- Cuestión 24
 
+-- Elimina los índices de la cuestión 20
+DROP INDEX IF EXISTS idx_estudiantes_indice_btree;
+DROP INDEX IF EXISTS idx_estudiantes_codigo_carrera_btree;
+DROP INDEX IF EXISTS idx_estudiantes_estudiante_id_hash;
+DROP INDEX IF EXISTS idx_estudiantes_indice_hash;
 
+-- Crear índice multiclave
+CREATE INDEX idx_estudiantes_codigo_indice_btree
+ON public.estudiantes USING btree (codigo_carrera, indice);
 
 ---------- Cuestión 25
 
+----- Apartado 1
 
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT  *
+FROM public.estudiantes
+WHERE codigo_carrera = 20 AND indice = 500;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
+----- Apartado 2
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT  *
+FROM public.estudiantes
+WHERE codigo_carrera = 50 OR indice = 900;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
+----- Apartado 3
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT  *
+FROM public.estudiantes
+WHERE indice = 300;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
+
+----- Apartado 4
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT  *
+FROM public.estudiantes
+WHERE codigo_carrera = 80;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  heap_blks_read,
+  heap_blks_hit,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_tables
+WHERE relname = 'estudiantes';
+
+    -- De los índices
+SELECT
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname = 'estudiantes'
+ORDER BY indexrelname;
 
 ---------- Cuestión 26
+
+-- Crear la tabla particionada por el campo edad
+DROP TABLE IF EXISTS public.estudiantes3 CASCADE;
+
+CREATE TABLE public.estudiantes3 (
+    estudiante_id SERIAL,
+    nombre TEXT,
+    codigo_carrera INT,
+    edad INT,
+    indice INT,
+    PRIMARY KEY (estudiante_id, edad)
+) PARTITION BY LIST (edad);
+
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e18 PARTITION OF public.estudiantes3 FOR VALUES IN (18);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e19 PARTITION OF public.estudiantes3 FOR VALUES IN (19);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e20 PARTITION OF public.estudiantes3 FOR VALUES IN (20);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e21 PARTITION OF public.estudiantes3 FOR VALUES IN (21);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e22 PARTITION OF public.estudiantes3 FOR VALUES IN (22);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e23 PARTITION OF public.estudiantes3 FOR VALUES IN (23);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e24 PARTITION OF public.estudiantes3 FOR VALUES IN (24);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e25 PARTITION OF public.estudiantes3 FOR VALUES IN (25);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e26 PARTITION OF public.estudiantes3 FOR VALUES IN (26);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e27 PARTITION OF public.estudiantes3 FOR VALUES IN (27);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e28 PARTITION OF public.estudiantes3 FOR VALUES IN (28);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e29 PARTITION OF public.estudiantes3 FOR VALUES IN (29);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e30 PARTITION OF public.estudiantes3 FOR VALUES IN (30);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e31 PARTITION OF public.estudiantes3 FOR VALUES IN (31);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e32 PARTITION OF public.estudiantes3 FOR VALUES IN (32);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e33 PARTITION OF public.estudiantes3 FOR VALUES IN (33);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e34 PARTITION OF public.estudiantes3 FOR VALUES IN (34);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e35 PARTITION OF public.estudiantes3 FOR VALUES IN (35);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e36 PARTITION OF public.estudiantes3 FOR VALUES IN (36);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e37 PARTITION OF public.estudiantes3 FOR VALUES IN (37);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e38 PARTITION OF public.estudiantes3 FOR VALUES IN (38);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e39 PARTITION OF public.estudiantes3 FOR VALUES IN (39);
+CREATE TABLE IF NOT EXISTS public.estudiantes3_e40 PARTITION OF public.estudiantes3 FOR VALUES IN (40);
+
+COPY public.estudiantes3(nombre, codigo_carrera, edad, indice)
+FROM 'C:\estudiantes.csv'
+WITH (FORMAT csv, HEADER true);
+
+ANALYZE public.estudiantes3;
+
+----- Apartado 1
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT  COUNT(*)
+FROM public.estudiantes3
+WHERE edad = 25;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  relname,
+  heap_blks_read,
+  heap_blks_hit
+FROM pg_statio_user_tables
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname;
+
+    -- De los índices
+SELECT
+  relname,
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname, indexrelname;
+
+----- Apartado 2
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT *
+FROM public.estudiantes3
+WHERE edad IN (20, 25, 30);
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  relname,
+  heap_blks_read,
+  heap_blks_hit
+FROM pg_statio_user_tables
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname;
+
+    -- De los índices
+SELECT
+  relname,
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname, indexrelname;
+
+----- Apartado 3
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT *
+FROM public.estudiantes3
+WHERE edad BETWEEN 25 AND 30;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  relname,
+  heap_blks_read,
+  heap_blks_hit
+FROM pg_statio_user_tables
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname;
+
+    -- De los índices
+SELECT
+  relname,
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname, indexrelname;
+
+----- Apartado 4
+
+-- Reinicializamos estadísticas
+SELECT pg_stat_reset();
+
+-- Ejecutar la consulta
+SELECT *
+FROM public.estudiantes3
+WHERE edad > 50;
+
+-- Medir bloques leídos
+
+    -- De la tabla
+SELECT
+  relname,
+  heap_blks_read,
+  heap_blks_hit
+FROM pg_statio_user_tables
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname;
+
+    -- De los índices
+SELECT
+  relname,
+  indexrelname,
+  idx_blks_read,
+  idx_blks_hit
+FROM pg_statio_user_indexes
+WHERE relname LIKE 'estudiantes3_e%'
+ORDER BY relname, indexrelname;
